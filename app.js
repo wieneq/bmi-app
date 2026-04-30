@@ -375,7 +375,6 @@ function openScanner() {
   if (!html5QrcodeScanner) {
     html5QrcodeScanner = new Html5Qrcode("qr-reader");
   }
-  }
   
   html5QrcodeScanner.start(
     { facingMode: "environment" },
