@@ -103,6 +103,80 @@
     </div>
   </div>
 
+  <!-- Feature Buttons -->
+  <div class="feature-buttons">
+    <button id="btn-camera" class="feature-btn" type="button">
+      <span class="feature-icon">📷</span>
+      <span class="feature-label">拍照記錄</span>
+    </button>
+    <button id="btn-scanner" class="feature-btn" type="button">
+      <span class="feature-icon">📱</span>
+      <span class="feature-label">掃碼簽名</span>
+    </button>
+    <button id="btn-navigation" class="feature-btn" type="button">
+      <span class="feature-icon">🗺️</span>
+      <span class="feature-label">地圖導航</span>
+    </button>
+  </div>
+
+  <!-- Camera Modal -->
+  <div id="camera-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📷 拍照記錄</h2>
+        <button class="modal-close" data-modal="camera-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="camera-preview" class="camera-preview">
+          <video id="camera-video" autoplay playsinline></video>
+          <button id="capture-btn" class="capture-btn">拍照</button>
+        </div>
+        <div id="photo-grid" class="photo-grid"></div>
+        <div class="camera-info">已拍攝 <span id="photo-count">0</span> / 4 張</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scanner Modal -->
+  <div id="scanner-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📱 掃碼簽名</h2>
+        <button class="modal-close" data-modal="scanner-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="qr-reader" class="qr-reader"></div>
+        <div id="scan-results" class="scan-results"></div>
+        <div class="signature-section">
+          <h3>✍️ 電子簽名</h3>
+          <canvas id="signature-canvas" class="signature-canvas"></canvas>
+          <div class="signature-controls">
+            <button id="clear-signature" class="btn-secondary">清除簽名</button>
+            <button id="save-signature" class="btn-primary">儲存簽名</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Modal -->
+  <div id="navigation-modal" class="modal">
+    <div class="modal-content modal-nav">
+      <div class="modal-header">
+        <h2>🗺️ 地圖導航</h2>
+        <button class="modal-close" data-modal="navigation-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="nav-input-group">
+          <label for="nav-address">輸入目的地地址</label>
+          <input id="nav-address" type="text" placeholder="例：台北101" class="nav-input" />
+          <button id="start-navigation" class="btn-nav">開始導航</button>
+        </div>
+        <div id="nav-frame-container" class="nav-frame-container"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- PWA install banner -->
   <div id="install-banner" class="install-banner" role="status">
     <p>安裝到主畫面，離線也能使用！</p>
@@ -114,6 +188,9 @@
     <p>參考標準：衛生福利部國民健康署 BMI 分類</p>
     <p style="margin-top:4px">BMI = 體重(kg) ÷ 身高²(m)</p>
   </footer>
+
+  <!-- QR Code Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <script src="app.js"></script>
 </body>

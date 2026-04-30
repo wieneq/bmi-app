@@ -165,3 +165,365 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
 }
+
+// ========================================
+// Feature 1: Camera Photo Capture
+// ========================================
+const btnCamera = document.getElementById('btn-camera');
+const cameraModal = document.getElementById('camera-modal');
+const cameraVideo = document.getElementById('camera-video');
+const captureBtn = document.getElementById('capture-btn');
+const photoGrid = document.getElementById('photo-grid');
+const photoCount = document.getElementById('photo-count');
+
+let cameraStream = null;
+let photos = [];
+const MAX_PHOTOS = 4;
+
+btnCamera.addEventListener('click', openCamera);
+captureBtn.addEventListener('click', capturePhoto);
+
+async function openCamera() {
+  cameraModal.classList.add('active');
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: 'environment' },
+      audio: false 
+    });
+    cameraVideo.srcObject = cameraStream;
+    loadPhotosFromStorage();
+  } catch (error) {
+    alert('無法開啟相機：' + error.message);
+    cameraModal.classList.remove('active');
+  }
+}
+
+function capturePhoto() {
+  if (photos.length >= MAX_PHOTOS) {
+    alert(`最多只能拍攝 ${MAX_PHOTOS} 張照片！`);
+    return;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = cameraVideo.videoWidth;
+  canvas.height = cameraVideo.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(cameraVideo, 0, 0);
+  
+  const timestamp = new Date().toLocaleString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+  
+  const photoData = {
+    id: Date.now(),
+    dataUrl: canvas.toDataURL('image/jpeg', 0.8),
+    timestamp: timestamp
+  };
+  
+  photos.push(photoData);
+  savePhotosToStorage();
+  renderPhotos();
+}
+
+function renderPhotos() {
+  photoGrid.innerHTML = '';
+  photoCount.textContent = photos.length;
+  
+  photos.forEach((photo, index) => {
+    const photoCard = document.createElement('div');
+    photoCard.className = 'photo-card';
+    photoCard.innerHTML = `
+      <img src="${photo.dataUrl}" alt="照片 ${index + 1}" />
+      <div class="photo-info">${photo.timestamp}</div>
+      <button class="photo-delete" onclick="deletePhoto(${photo.id})">🗑️</button>
+    `;
+    photoGrid.appendChild(photoCard);
+  });
+}
+
+function deletePhoto(photoId) {
+  photos = photos.filter(p => p.id !== photoId);
+  savePhotosToStorage();
+  renderPhotos();
+}
+
+function savePhotosToStorage() {
+  localStorage.setItem('bmi-photos', JSON.stringify(photos));
+}
+
+function loadPhotosFromStorage() {
+  const saved = localStorage.getItem('bmi-photos');
+  if (saved) {
+    photos = JSON.parse(saved);
+    renderPhotos();
+  }
+}
+
+// Make deletePhoto available globally
+window.deletePhoto = deletePhoto;
+
+// ========================================
+// Feature 2: QR/Barcode Scanner + Signature
+// ========================================
+const btnScanner = document.getElementById('btn-scanner');
+const scannerModal = document.getElementById('scanner-modal');
+const scanResults = document.getElementById('scan-results');
+const signatureCanvas = document.getElementById('signature-canvas');
+const clearSignatureBtn = document.getElementById('clear-signature');
+const saveSignatureBtn = document.getElementById('save-signature');
+
+let html5QrcodeScanner = null;
+let scannedCodes = [];
+let isDrawing = false;
+let lastX = 0;
+let lastY = 0;
+
+btnScanner.addEventListener('click', openScanner);
+clearSignatureBtn.addEventListener('click', clearSignature);
+saveSignatureBtn.addEventListener('click', saveSignature);
+
+// Setup signature canvas
+signatureCanvas.width = signatureCanvas.offsetWidth;
+signatureCanvas.height = 200;
+const ctx = signatureCanvas.getContext('2d');
+ctx.strokeStyle = '#000';
+ctx.lineWidth = 2;
+ctx.lineCap = 'round';
+
+// Mouse events
+signatureCanvas.addEventListener('mousedown', startDrawing);
+signatureCanvas.addEventListener('mousemove', draw);
+signatureCanvas.addEventListener('mouseup', stopDrawing);
+signatureCanvas.addEventListener('mouseout', stopDrawing);
+
+// Touch events
+signatureCanvas.addEventListener('touchstart', handleTouchStart);
+signatureCanvas.addEventListener('touchmove', handleTouchMove);
+signatureCanvas.addEventListener('touchend', stopDrawing);
+
+function startDrawing(e) {
+  isDrawing = true;
+  [lastX, lastY] = [e.offsetX, e.offsetY];
+}
+
+function draw(e) {
+  if (!isDrawing) return;
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(e.offsetX, e.offsetY);
+  ctx.stroke();
+  [lastX, lastY] = [e.offsetX, e.offsetY];
+}
+
+function stopDrawing() {
+  isDrawing = false;
+}
+
+function handleTouchStart(e) {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const rect = signatureCanvas.getBoundingClientRect();
+  isDrawing = true;
+  lastX = touch.clientX - rect.left;
+  lastY = touch.clientY - rect.top;
+}
+
+function handleTouchMove(e) {
+  if (!isDrawing) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  const rect = signatureCanvas.getBoundingClientRect();
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+  
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  [lastX, lastY] = [x, y];
+}
+
+function clearSignature() {
+  ctx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+}
+
+function openScanner() {
+  scannerModal.classList.add('active');
+  loadScannedCodes();
+  
+  if (!html5QrcodeScanner) {
+    html5QrcodeScanner = new Html5Qrcode("qr-reader");
+  }
+  
+  html5QrcodeScanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 250, height: 250 } },
+    onScanSuccess,
+    onScanError
+  ).catch(err => {
+    console.error('Scanner error:', err);
+  });
+}
+
+function onScanSuccess(decodedText, decodedResult) {
+  const timestamp = new Date().toLocaleString('zh-TW');
+  const codeData = {
+    id: Date.now(),
+    text: decodedText,
+    format: decodedResult.result.format?.formatName || 'Unknown',
+    timestamp: timestamp
+  };
+  
+  scannedCodes.push(codeData);
+  renderScannedCodes();
+  
+  // Vibrate if supported
+  if (navigator.vibrate) {
+    navigator.vibrate(200);
+  }
+}
+
+function onScanError(error) {
+  // Ignore continuous scanning errors
+}
+
+function renderScannedCodes() {
+  scanResults.innerHTML = '<h4>掃描結果</h4>';
+  scannedCodes.forEach((code, index) => {
+    const codeItem = document.createElement('div');
+    codeItem.className = 'scan-item';
+    codeItem.innerHTML = `
+      <div class="scan-header">
+        <span class="scan-format">${code.format}</span>
+        <button class="scan-delete" onclick="deleteScanCode(${code.id})">🗑️</button>
+      </div>
+      <div class="scan-text">${code.text}</div>
+      <div class="scan-time">${code.timestamp}</div>
+    `;
+    scanResults.appendChild(codeItem);
+  });
+}
+
+function deleteScanCode(codeId) {
+  scannedCodes = scannedCodes.filter(c => c.id !== codeId);
+  saveScannedCodes();
+  renderScannedCodes();
+}
+
+function saveSignature() {
+  if (scannedCodes.length === 0) {
+    alert('請先掃描至少一個條碼！');
+    return;
+  }
+  
+  const signatureData = signatureCanvas.toDataURL('image/png');
+  const timestamp = new Date().toLocaleString('zh-TW');
+  
+  const record = {
+    id: Date.now(),
+    codes: [...scannedCodes],
+    signature: signatureData,
+    timestamp: timestamp
+  };
+  
+  // Save to localStorage
+  const records = JSON.parse(localStorage.getItem('scan-records') || '[]');
+  records.push(record);
+  localStorage.setItem('scan-records', JSON.stringify(records));
+  
+  alert('✅ 掃描記錄與簽名已儲存！');
+  
+  // Clear current session
+  scannedCodes = [];
+  clearSignature();
+  renderScannedCodes();
+  saveScannedCodes();
+}
+
+function saveScannedCodes() {
+  localStorage.setItem('scanned-codes', JSON.stringify(scannedCodes));
+}
+
+function loadScannedCodes() {
+  const saved = localStorage.getItem('scanned-codes');
+  if (saved) {
+    scannedCodes = JSON.parse(saved);
+    renderScannedCodes();
+  }
+}
+
+window.deleteScanCode = deleteScanCode;
+
+// ========================================
+// Feature 3: Google Navigation
+// ========================================
+const btnNavigation = document.getElementById('btn-navigation');
+const navigationModal = document.getElementById('navigation-modal');
+const navAddress = document.getElementById('nav-address');
+const startNavigationBtn = document.getElementById('start-navigation');
+const navFrameContainer = document.getElementById('nav-frame-container');
+
+btnNavigation.addEventListener('click', () => {
+  navigationModal.classList.add('active');
+});
+
+startNavigationBtn.addEventListener('click', startNavigation);
+navAddress.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') startNavigation();
+});
+
+function startNavigation() {
+  const address = navAddress.value.trim();
+  if (!address) {
+    alert('請輸入目的地地址！');
+    return;
+  }
+  
+  const encodedAddress = encodeURIComponent(address);
+  const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}&travelmode=driving`;
+  
+  // Open in same window/tab
+  window.location.href = googleMapsUrl;
+}
+
+// ========================================
+// Modal Controls
+// ========================================
+const modalCloseButtons = document.querySelectorAll('.modal-close');
+const modals = document.querySelectorAll('.modal');
+
+modalCloseButtons.forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const modalId = e.target.getAttribute('data-modal');
+    closeModal(modalId);
+  });
+});
+
+modals.forEach(modal => {
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeModal(modal.id);
+    }
+  });
+});
+
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  modal.classList.remove('active');
+  
+  // Stop camera if closing camera modal
+  if (modalId === 'camera-modal' && cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+  }
+  
+  // Stop scanner if closing scanner modal
+  if (modalId === 'scanner-modal' && html5QrcodeScanner) {
+    html5QrcodeScanner.stop().catch(() => {});
+  }
+}
