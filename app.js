@@ -1,6 +1,8 @@
 // Unit toggle
 let unit = 'metric'; // 'metric' | 'imperial'
 
+console.log('BMI App JavaScript loaded'); // Debug
+
 const btnMetric   = document.getElementById('btn-metric');
 const btnImperial = document.getElementById('btn-imperial');
 const metricFields    = document.getElementById('metric-fields');
@@ -81,6 +83,7 @@ document.getElementById('btn-calc').addEventListener('click', calculate);
 document.addEventListener('keydown', (e) => { if (e.key === 'Enter') calculate(); });
 
 function calculate() {
+  console.log('Calculate function called'); // Debug
   let heightM, weightKg;
 
   if (unit === 'metric') {
@@ -372,18 +375,29 @@ function openScanner() {
   
   loadScannedCodes();
   
-  if (!html5QrcodeScanner) {
-    html5QrcodeScanner = new Html5Qrcode("qr-reader");
+  // Check if Html5Qrcode library is loaded
+  if (typeof Html5Qrcode === 'undefined') {
+    alert('掃描器庫尚未載入，請稍後再試或重新整理頁面。');
+    return;
   }
   
-  html5QrcodeScanner.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: { width: 250, height: 250 } },
-    onScanSuccess,
-    onScanError
-  ).catch(err => {
-    console.error('Scanner error:', err);
-  });
+  try {
+    if (!html5QrcodeScanner) {
+      html5QrcodeScanner = new Html5Qrcode("qr-reader");
+    }
+    
+    html5QrcodeScanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      onScanSuccess,
+      onScanError
+    ).catch(err => {
+      console.error('Scanner error:', err);
+    });
+  } catch (error) {
+    console.error('Failed to initialize scanner:', error);
+    alert('無法啟動掃描器：' + error.message);
+  }
 }
 
 function onScanSuccess(decodedText, decodedResult) {
