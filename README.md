@@ -13,8 +13,8 @@
 
 ## 🚀 線上體驗
 
-- **Vercel**: [部署後更新此連結]
-- **GitHub Pages**: [部署後更新此連結]
+- **Vercel**: https://bmi-app-lime.vercel.app
+- **GitHub**: https://github.com/wieneq/bmi-app
 
 ## 📋 BMI 分類標準
 
