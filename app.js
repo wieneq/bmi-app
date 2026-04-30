@@ -282,18 +282,25 @@ let scannedCodes = [];
 let isDrawing = false;
 let lastX = 0;
 let lastY = 0;
+let signatureCtx = null;
 
 btnScanner.addEventListener('click', openScanner);
 clearSignatureBtn.addEventListener('click', clearSignature);
 saveSignatureBtn.addEventListener('click', saveSignature);
 
-// Setup signature canvas
-signatureCanvas.width = signatureCanvas.offsetWidth;
-signatureCanvas.height = 200;
-const ctx = signatureCanvas.getContext('2d');
-ctx.strokeStyle = '#000';
-ctx.lineWidth = 2;
-ctx.lineCap = 'round';
+function initSignatureCanvas() {
+  // Set canvas size to match its display size
+  const rect = signatureCanvas.getBoundingClientRect();
+  signatureCanvas.width = rect.width;
+  signatureCanvas.height = 200;
+  
+  // Initialize context
+  signatureCtx = signatureCanvas.getContext('2d');
+  signatureCtx.strokeStyle = '#000';
+  signatureCtx.lineWidth = 2;
+  signatureCtx.lineCap = 'round';
+  signatureCtx.lineJoin = 'round';
+}
 
 // Mouse events
 signatureCanvas.addEventListener('mousedown', startDrawing);
@@ -307,16 +314,17 @@ signatureCanvas.addEventListener('touchmove', handleTouchMove);
 signatureCanvas.addEventListener('touchend', stopDrawing);
 
 function startDrawing(e) {
+  if (!signatureCtx) initSignatureCanvas();
   isDrawing = true;
   [lastX, lastY] = [e.offsetX, e.offsetY];
 }
 
 function draw(e) {
-  if (!isDrawing) return;
-  ctx.beginPath();
-  ctx.moveTo(lastX, lastY);
-  ctx.lineTo(e.offsetX, e.offsetY);
-  ctx.stroke();
+  if (!isDrawing || !signatureCtx) return;
+  signatureCtx.beginPath();
+  signatureCtx.moveTo(lastX, lastY);
+  signatureCtx.lineTo(e.offsetX, e.offsetY);
+  signatureCtx.stroke();
   [lastX, lastY] = [e.offsetX, e.offsetY];
 }
 
@@ -326,6 +334,7 @@ function stopDrawing() {
 
 function handleTouchStart(e) {
   e.preventDefault();
+  if (!signatureCtx) initSignatureCanvas();
   const touch = e.touches[0];
   const rect = signatureCanvas.getBoundingClientRect();
   isDrawing = true;
@@ -334,30 +343,38 @@ function handleTouchStart(e) {
 }
 
 function handleTouchMove(e) {
-  if (!isDrawing) return;
+  if (!isDrawing || !signatureCtx) return;
   e.preventDefault();
   const touch = e.touches[0];
   const rect = signatureCanvas.getBoundingClientRect();
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
   
-  ctx.beginPath();
-  ctx.moveTo(lastX, lastY);
-  ctx.lineTo(x, y);
-  ctx.stroke();
+  signatureCtx.beginPath();
+  signatureCtx.moveTo(lastX, lastY);
+  signatureCtx.lineTo(x, y);
+  signatureCtx.stroke();
   [lastX, lastY] = [x, y];
 }
 
 function clearSignature() {
-  ctx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+  if (!signatureCtx) initSignatureCanvas();
+  signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
 }
 
 function openScanner() {
   scannerModal.classList.add('active');
+  
+  // Initialize signature canvas when modal opens
+  setTimeout(() => {
+    initSignatureCanvas();
+  }, 100);
+  
   loadScannedCodes();
   
   if (!html5QrcodeScanner) {
     html5QrcodeScanner = new Html5Qrcode("qr-reader");
+  }
   }
   
   html5QrcodeScanner.start(
