@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#4f8ef7" />
+  <meta name="description" content="快速計算你的身體質量指數 (BMI)" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="BMI 計算器" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+  <title>BMI 計算器</title>
+</head>
+<body>
+
+  <header>
+    <h1>BMI 計算器</h1>
+    <p>身體質量指數 · 台灣衛福部標準</p>
+  </header>
+
+  <div class="card">
+
+    <!-- Unit toggle -->
+    <div class="unit-toggle" role="group" aria-label="單位切換">
+      <button id="btn-metric" class="active" type="button">公制 (cm / kg)</button>
+      <button id="btn-imperial" type="button">英制 (ft / lb)</button>
+    </div>
+
+    <!-- Metric fields -->
+    <div id="metric-fields">
+      <div class="field">
+        <label for="height-cm">身高</label>
+        <div class="input-wrap">
+          <input id="height-cm" type="number" inputmode="decimal" min="50" max="250" value="170" placeholder="170" />
+          <span class="unit-label">cm</span>
+        </div>
+        <div class="slider-wrap">
+          <input id="height-slider" type="range" min="50" max="250" value="170" aria-label="身高滑桿" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="weight-kg">體重</label>
+        <div class="input-wrap">
+          <input id="weight-kg" type="number" inputmode="decimal" min="10" max="300" value="65" placeholder="65" />
+          <span class="unit-label">kg</span>
+        </div>
+        <div class="slider-wrap">
+          <input id="weight-slider" type="range" min="10" max="300" value="65" aria-label="體重滑桿" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Imperial fields -->
+    <div id="imperial-fields" hidden>
+      <div class="field">
+        <label>身高</label>
+        <div class="input-row">
+          <div class="input-wrap">
+            <input id="height-ft" type="number" inputmode="decimal" min="1" max="9" placeholder="5" />
+            <span class="unit-label">ft</span>
+          </div>
+          <div class="input-wrap">
+            <input id="height-in" type="number" inputmode="decimal" min="0" max="11" placeholder="7" />
+            <span class="unit-label">in</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="weight-lb">體重</label>
+        <div class="input-wrap">
+          <input id="weight-lb" type="number" inputmode="decimal" min="20" max="700" placeholder="143" />
+          <span class="unit-label">lb</span>
+        </div>
+      </div>
+    </div>
+
+    <button id="btn-calc" class="btn-calc" type="button">計算 BMI</button>
+
+    <!-- Result -->
+    <div id="result" class="result" aria-live="polite">
+      <div id="bmi-circle" class="bmi-circle cat-normal">
+        <span id="bmi-number" class="bmi-number">--</span>
+        <span class="bmi-unit">BMI</span>
+      </div>
+      <span id="category-badge" class="category-badge bg-normal">--</span>
+      <p id="advice-text" class="advice"></p>
+
+      <div class="scale">
+        <div class="scale-bar">
+          <div id="scale-marker" class="scale-marker"></div>
+        </div>
+        <div class="scale-labels">
+          <span>過輕</span>
+          <span>正常</span>
+          <span>過重</span>
+          <span>肥胖</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PWA install banner -->
+  <div id="install-banner" class="install-banner" role="status">
+    <p>安裝到主畫面，離線也能使用！</p>
+    <button id="btn-install" class="btn-install" type="button">安裝</button>
+    <button id="btn-dismiss" class="btn-dismiss" type="button" aria-label="關閉">&#10005;</button>
+  </div>
+
+  <footer>
+    <p>參考標準：衛生福利部國民健康署 BMI 分類</p>
+    <p style="margin-top:4px">BMI = 體重(kg) ÷ 身高²(m)</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
